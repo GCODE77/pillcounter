@@ -1,5 +1,5 @@
 {
-  "version": "5.9",
-  "notes": "데이터 백업, 기록 엑셀, 결과 확대, 약품명 검색, 새 색상",
+  "version": "5.10",
+  "notes": "약품명 검색이 인증키 없이 바로 됩니다",
   "files": ["index.html", "engine.js", "manifest.webmanifest", "sw.js", "icons/icon-192.png", "icons/icon-512.png"]
 }
