@@ -1,0 +1,24 @@
+name: 약품명 목록 갱신
+on:
+  schedule:
+    - cron: '0 18 * * 0'   # 매주 월요일 03:00(한국시간)
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node scripts/build-drugs.js
+        env:
+          DRUG_KEY: ${{ secrets.DRUG_KEY }}
+      - name: 변경이 있으면 커밋
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add drugs.json
+          git diff --cached --quiet || (git commit -m "약품명 목록 갱신" && git push)
