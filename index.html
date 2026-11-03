@@ -468,7 +468,7 @@
   <header><div class="brand"><img src="icons/icon-192.png" alt=""><div class="wordmark"><h1>필카운터</h1><span>PILL COUNTER</span></div></div><div class="hd-act">
     <button class="hd-btn hidden" id="installBtn" aria-label="앱 설치"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m-4.5-4.5L12 15l4.5-4.5M5 19h14"/></svg><span>앱 설치</span></button>
     <button class="hd-btn icon hidden" id="fsBtn" aria-label="전체화면"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path id="fsIc" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
-    <small class="ver">v5.10</small></div></header>
+    <small class="ver">v5.11</small></div></header>
 
   <!-- ===== 계수 화면 ===== -->
   <section class="page" id="pgCount">
@@ -719,7 +719,7 @@
 </div>
 <div class="modal" id="pick" style="z-index:60"><div class="box">
   <h2>약품명 검색</h2>
-  <div class="name-with-btn"><input class="text" id="pickQ" placeholder="약 이름 (예: 타이레놀)" autocomplete="off"><button class="primary" id="pickGo">검색</button></div>
+  <div class="name-with-btn"><input class="text" id="pickQ" placeholder="약 이름 또는 초성 (예: ㅌㅇㄹㄴ)" autocomplete="off"><button class="primary" id="pickGo">검색</button></div>
   <ul class="pick-list" id="pickList"></ul>
   <div class="actions"><button class="ghost" id="pickClose">닫기</button></div>
 </div></div>
@@ -752,7 +752,7 @@ function btn(label,cls,fn,icon){const b=document.createElement('button');b.class
    무거운 계산은 engine.js(Web Worker)에서 돌려 화면이 멈추지 않게 함 */
 let engine, reqId=0; const pending=new Map();
 function startEngine(){
-  engine=new Worker('engine.js?v=5.10');
+  engine=new Worker('engine.js?v=5.11');
   engine.onmessage=e=>{const cb=pending.get(e.data.id); pending.delete(e.data.id); if(cb) cb(e.data)};
   engine.onerror=()=>{ pending.forEach(cb=>cb({none:true,error:'worker'})); pending.clear(); };
 }
@@ -1434,7 +1434,7 @@ document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>{
 
 /* ---------- 업데이트 확인 ----------
    GitHub에 올라간 version.json의 버전이 지금 앱보다 높으면 알림 → 누르면 새 파일을 내려받고 다시 시작 */
-const APP_VERSION='5.10';
+const APP_VERSION='5.11';
 const verNum=v=>String(v).split('.').map(n=>parseInt(n)||0).reduce((a,n)=>a*1000+n,0);
 let latest=null;
 async function checkUpdate(){
@@ -1770,15 +1770,23 @@ async function loadDrugDB(){
   if(!r.ok) throw new Error('약품 목록이 아직 준비되지 않았습니다');
   const j=await r.json(); return drugDB=j;
 }
+const CHO='ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ';
+function drugRegex(w){                                                                      // 자음(초성)만 넣어도 맞도록: ㅌㅇ → 타이…
+  return new RegExp([...w].map(c=>{ const i=CHO.indexOf(c); return i<0?c.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'):'['+String.fromCharCode(0xAC00+i*588)+'-'+String.fromCharCode(0xAC00+i*588+587)+']'; }).join(''),'i');
+}
 function searchDrugDB(db,q){
-  const ws=q.toLowerCase().split(/\s+/).filter(Boolean);
-  const hit=db.items.filter(x=>{ const t=(x[0]+' '+x[1]).toLowerCase(); return ws.every(w=>t.includes(w)); });
-  hit.sort((a,b)=>a[2]-b[2]||(a[0].toLowerCase().startsWith(ws[0])?0:1)-(b[0].toLowerCase().startsWith(ws[0])?0:1)||a[0].length-b[0].length);
-  return {items:hit.slice(0,30).map(x=>({name:x[0],entp:x[1],old:!!x[2]})),total:hit.length};
+  const rs=q.trim().split(/\s+/).filter(Boolean).map(drugRegex); if(!rs.length) return {items:[],total:0};
+  const hit=[];
+  for(const x of db.items){
+    const t=x[0]+' '+x[1]; let ok=true; for(const r of rs) if(!r.test(t)){ ok=false; break; }
+    if(ok){ const m=rs[0].exec(x[0]); hit.push([x,m?m.index:99]); }                       // 이름 앞부분에서 맞을수록 위로
+  }
+  hit.sort((a,b)=>a[0][2]-b[0][2]||a[1]-b[1]||a[0][0].length-b[0][0].length);
+  return {items:hit.slice(0,30).map(h=>({name:h[0][0],entp:h[0][1],old:!!h[0][2]})),total:hit.length};
 }
 const canLookup=()=>true;
 async function fetchDrugNames(q,rows){
-  if(!getKey()&&!PROXY_URL) return searchDrugDB(await loadDrugDB(),q);                     // 키도 중계 서버도 없으면 저장소의 약품 목록으로 검색
+  if(!PROXY_URL){ try{ return searchDrugDB(await loadDrugDB(),q); }catch(e){ if(!getKey()) throw e; } }  /* 약품 목록 우선, 안 되면 기기의 키로 직접 조회 */                      // 키도 중계 서버도 없으면 저장소의 약품 목록으로 검색
   if(!getKey()&&PROXY_URL){                                                                // 기기에 키가 없으면 중계 서버로
     let r,j; try{ r=await fetch(`${PROXY_URL}?q=${encodeURIComponent(q)}`); j=await r.json(); }catch(e){ throw new Error('서버에 연결하지 못했습니다'); }
     if(j.error) throw new Error(j.error); return j;
@@ -1796,19 +1804,22 @@ let pickCb=null;
 function openPick(initial,cb){
   pickCb=cb; $('pick').style.display='flex'; $('pickQ').value=initial||'';
   if(!canLookup()){ $('pickList').innerHTML='<li class="msg">약품명 검색을 쓰려면 인증키가 필요합니다.<br><b>더보기 → 약품명 검색 연결</b>에서 등록하세요.</li>'; return; }
-  $('pickList').innerHTML='<li class="msg">약 이름을 입력하고 검색을 누르세요</li>';
+  $('pickList').innerHTML='<li class="msg">약 이름이나 초성(예: ㅌㅇㄹㄴ)을 입력하세요</li>';
   if(initial&&initial.trim()) runPick(); else setTimeout(()=>$('pickQ').focus(),50);
 }
-async function runPick(){
-  const q=$('pickQ').value.trim(); if(!q) return;
-  $('pickList').innerHTML='<li class="msg">검색 중…</li>';
+let pickSeq=0;
+async function runPick(live){
+  const q=$('pickQ').value.trim(); const my=++pickSeq;
+  if(!q){ $('pickList').innerHTML='<li class="msg">약 이름이나 초성(예: ㅌㅇㄹㄴ)을 입력하세요</li>'; return; }
+  if(live!==true) $('pickList').innerHTML='<li class="msg">검색 중…</li>';
   try{
-    const r=await fetchDrugNames(q);
-    $('pickList').innerHTML=r.items.length?r.items.map((x,i)=>`<li data-i="${i}"><b>${esc(x.name)}</b><small>${esc(x.entp)}${x.old?' · 허가 취하':''}</small></li>`).join('')+(r.total>r.items.length?`<li class="msg">${r.total}건 중 ${r.items.length}건 · 이름을 더 자세히 쓰면 좁혀집니다</li>`:''):'<li class="msg">검색 결과가 없습니다. 이름 일부만 입력해 보세요</li>';
+    const r=await fetchDrugNames(q); if(my!==pickSeq) return;                                  // 더 나중에 친 글자의 결과만 보여줌
+    $('pickList').innerHTML=r.items.length?r.items.map((x,i)=>`<li data-i="${i}"><b>${esc(x.name)}</b><small>${esc(x.entp)}${x.old?' · 허가 취하':''}</small></li>`).join('')+(r.total>r.items.length?`<li class="msg">${r.total}건 중 ${r.items.length}건 · 이름을 더 자세히 쓰면 좁혀집니다</li>`:''):'<li class="msg">검색 결과가 없습니다. 이름 일부나 초성만 입력해 보세요</li>';
     $('pickList')._items=r.items;
   }catch(e){ $('pickList').innerHTML=`<li class="msg">${esc(e.message&&e.name!=='TypeError'?e.message:'인터넷 연결을 확인하세요')}</li>`; }
 }
-$('pickGo').onclick=runPick; $('pickQ').onkeydown=e=>{ if(e.key==='Enter') runPick(); };
+let pickTimer=0; $('pickQ').oninput=()=>{ clearTimeout(pickTimer); pickTimer=setTimeout(()=>runPick(true),150); };   // 치는 동안 바로 목록 갱신
+$('pickGo').onclick=()=>runPick(); $('pickQ').onkeydown=e=>{ if(e.key==='Enter') runPick(); };
 $('pickList').onclick=e=>{ const li=e.target.closest('li[data-i]'); if(!li) return; const it=$('pickList')._items[+li.dataset.i]; $('pick').style.display='none'; if(pickCb) pickCb(it.name); };
 $('pickClose').onclick=()=>$('pick').style.display='none';
 $('nameFind').onclick=()=>openPick($('drugName').value,n=>{ $('drugName').value=n; });

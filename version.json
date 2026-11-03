@@ -1,5 +1,5 @@
 {
-  "version": "5.10",
-  "notes": "약품명 검색이 인증키 없이 바로 됩니다",
+  "version": "5.11",
+  "notes": "약품명 검색: 치는 대로 목록이 뜨고 초성 검색 지원",
   "files": ["index.html", "engine.js", "manifest.webmanifest", "sw.js", "icons/icon-192.png", "icons/icon-512.png"]
 }

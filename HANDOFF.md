@@ -3,7 +3,7 @@
 다음 작업자(사람 또는 새 Claude 세션)가 이 문서만 읽고 바로 이어서 작업할 수 있도록 정리한 인수인계 문서입니다.
 
 - 최종 갱신: 2026-11-02
-- 현재 버전: **v5.10**
+- 현재 버전: **v5.11**
 - 배포 주소: https://gcode77.github.io/pillcounter/
 - 저장소: https://github.com/GCODE77/pillcounter (`main` → GitHub Pages)
 - 저작권: © GLORY KIM
@@ -12,9 +12,9 @@
 
 ## 0. 지금 상태 · 바로 이어서 할 일 (가장 먼저 읽기)
 
-**배포된 최신 버전은 v5.10**. v5.9 내용: 데이터 백업/불러오기, 기록 엑셀(CSV), 결과 두 손가락 확대, 약품명 검색(식약처), 처음 본 바코드 이름 기억, 앱 색상을 새 아이콘(청록→남색 + 노랑)에 맞춤, 탭 이름 '더보기'.
+**배포된 최신 버전은 v5.11**. v5.9 내용: 데이터 백업/불러오기, 기록 엑셀(CSV), 결과 두 손가락 확대, 약품명 검색(식약처), 처음 본 바코드 이름 기억, 앱 색상을 새 아이콘(청록→남색 + 노랑)에 맞춤, 탭 이름 '더보기'.
 
-**약품명 검색 (v5.10 완료)**: 중계 서버 대신 GitHub Actions 방식으로 해결. `.github/workflows/drugs.yml`이 매주(수동 실행도 가능: `gh workflow run drugs.yml`) `scripts/build-drugs.js`로 식약처 허가정보 전체(약 4.3만 건)를 `drugs.json`에 저장·커밋하고, 앱은 키가 없으면 이 파일에서 검색(`loadDrugDB`/`searchDrugDB`). 인증키는 저장소 Secrets `DRUG_KEY`에만 있음(키가 코드·대화 기록에 남지 않게 할 것). 기기에 키를 직접 넣으면 기존처럼 식약처에 직접 조회. `proxy/`(Vercel)와 `PROXY_URL`은 쓰지 않음(남겨 둠).
+**약품명 검색 (v5.10 완료)**: 중계 서버 대신 GitHub Actions 방식으로 해결. `.github/workflows/drugs.yml`이 매주· v5.11부터 치는 대로 목록이 뜨고 초성 검색 지원(`drugRegex`) (수동 실행도 가능: `gh workflow run drugs.yml`) `scripts/build-drugs.js`로 식약처 허가정보 전체(약 4.3만 건)를 `drugs.json`에 저장·커밋하고, 앱은 키가 없으면 이 파일에서 검색(`loadDrugDB`/`searchDrugDB`). 인증키는 저장소 Secrets `DRUG_KEY`에만 있음(키가 코드·대화 기록에 남지 않게 할 것). 기기에 키를 직접 넣으면 기존처럼 식약처에 직접 조회. `proxy/`(Vercel)와 `PROXY_URL`은 쓰지 않음(남겨 둠).
 - 바코드(표준코드)로 직접 약품명을 찾는 무료 공공 API는 찾지 못함. 그래서 '한 번 이름을 붙이면 기억(`pillcounter.codes`) + 이름 검색으로 정식 품목명 선택' 구조.
 
 **사용자 선호(이번 세션에서 확인)**: 가능하면 Claude가 끝까지 자동으로 실행하기를 원함. 다만 계정 생성·비밀번호/키 입력은 정책상 직접 하도록 안내해야 함. 매 변경마다 검토 → 커밋 → push → 문서 갱신. 응답은 한국어, 쉬운 말.
