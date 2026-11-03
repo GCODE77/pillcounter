@@ -468,7 +468,7 @@
   <header><div class="brand"><img src="icons/icon-192.png" alt=""><div class="wordmark"><h1>필카운터</h1><span>PILL COUNTER</span></div></div><div class="hd-act">
     <button class="hd-btn hidden" id="installBtn" aria-label="앱 설치"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m-4.5-4.5L12 15l4.5-4.5M5 19h14"/></svg><span>앱 설치</span></button>
     <button class="hd-btn icon hidden" id="fsBtn" aria-label="전체화면"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path id="fsIc" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
-    <small class="ver">v5.11</small></div></header>
+    <small class="ver">v5.12</small></div></header>
 
   <!-- ===== 계수 화면 ===== -->
   <section class="page" id="pgCount">
@@ -752,7 +752,7 @@ function btn(label,cls,fn,icon){const b=document.createElement('button');b.class
    무거운 계산은 engine.js(Web Worker)에서 돌려 화면이 멈추지 않게 함 */
 let engine, reqId=0; const pending=new Map();
 function startEngine(){
-  engine=new Worker('engine.js?v=5.11');
+  engine=new Worker('engine.js?v=5.12');
   engine.onmessage=e=>{const cb=pending.get(e.data.id); pending.delete(e.data.id); if(cb) cb(e.data)};
   engine.onerror=()=>{ pending.forEach(cb=>cb({none:true,error:'worker'})); pending.clear(); };
 }
@@ -1434,7 +1434,7 @@ document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>{
 
 /* ---------- 업데이트 확인 ----------
    GitHub에 올라간 version.json의 버전이 지금 앱보다 높으면 알림 → 누르면 새 파일을 내려받고 다시 시작 */
-const APP_VERSION='5.11';
+const APP_VERSION='5.12';
 const verNum=v=>String(v).split('.').map(n=>parseInt(n)||0).reduce((a,n)=>a*1000+n,0);
 let latest=null;
 async function checkUpdate(){
@@ -1782,7 +1782,7 @@ function searchDrugDB(db,q){
     if(ok){ const m=rs[0].exec(x[0]); hit.push([x,m?m.index:99]); }                       // 이름 앞부분에서 맞을수록 위로
   }
   hit.sort((a,b)=>a[0][2]-b[0][2]||a[1]-b[1]||a[0][0].length-b[0][0].length);
-  return {items:hit.slice(0,30).map(h=>({name:h[0][0],entp:h[0][1],old:!!h[0][2]})),total:hit.length};
+  return {items:hit.slice(0,300).map(h=>({name:h[0][0],entp:h[0][1],old:!!h[0][2]})),total:hit.length};
 }
 const canLookup=()=>true;
 async function fetchDrugNames(q,rows){

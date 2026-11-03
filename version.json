@@ -1,5 +1,5 @@
 {
-  "version": "5.11",
-  "notes": "약품명 검색: 치는 대로 목록이 뜨고 초성 검색 지원",
+  "version": "5.12",
+  "notes": "약품명 검색: 한 글자만 쳐도 긴 목록이 바로 뜸",
   "files": ["index.html", "engine.js", "manifest.webmanifest", "sw.js", "icons/icon-192.png", "icons/icon-512.png"]
 }
